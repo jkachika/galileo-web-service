@@ -1,20 +1,22 @@
 package galileo.resource;
 
 import java.io.IOException;
-import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
-import galileo.adapter.GalileoConnector;
+import galileo.comm.Connector;
 import galileo.event.Event;
+import galileo.net.NetworkDestination;
 import galileo.service.ColumbusServerApplication;
 
 public class ColumbusServerResource extends ServerResource {
 
 	private static final Logger LOGGER = Logger.getLogger(ColumbusServerResource.class.getName());
-	private GalileoConnector connector;
+	private NetworkDestination destination;
+	private Connector connector;
 
 	public ColumbusServerResource() {
 		setNegotiated(false);
@@ -28,22 +30,24 @@ public class ColumbusServerResource extends ServerResource {
 	protected void doInit() throws ResourceException {
 		try {
 			super.doInit();
-			Entry<String, Integer> server = ((ColumbusServerApplication) getApplication()).getServerAddress();
-			LOGGER.info("Galileo Host: " + server.getKey() + ":" + server.getValue());
-			this.connector = new GalileoConnector(server.getKey(), server.getValue());
-		} catch (IOException ioe) {
-			throw new ResourceException(ioe.getCause());
+			ColumbusServerApplication application = (ColumbusServerApplication) getApplication();
+			this.connector = new Connector();
+			this.destination = application.getDestination();
+			LOGGER.info("Galileo Host: " + destination.getHostname() + ":" + destination.getPort());
+		} catch (IOException e) {
+			LOGGER.log(Level.SEVERE, "failed to initialize server resource.", e);
+			throw new ResourceException(e);
 		}
 	}
 
 	@Override
 	protected void doRelease() throws ResourceException {
-		LOGGER.fine("Closing the connection to Galileo");
-		this.connector.close();
 		super.doRelease();
+		LOGGER.fine("closing connector");
+		this.connector.close();
 	}
 
-	public Event sendMessage(Event request) throws IOException {
-		return this.connector.sendMessage(request);
+	public Event sendMessage(Event request) throws IOException, InterruptedException {
+		return this.connector.sendMessage(this.destination, request);
 	}
 }

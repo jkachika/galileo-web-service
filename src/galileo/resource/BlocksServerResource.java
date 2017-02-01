@@ -23,30 +23,6 @@ public class BlocksServerResource extends ColumbusServerResource {
 
 	private static final Logger LOGGER = Logger.getLogger(BlocksServerResource.class.getName());
 
-	/*
-	 * @Get("?featurebyvalue") public String getFeatureByValue() { try {
-	 */
-	/*
-	 * String feature = getQueryValue("feature"); String operator =
-	 * getQueryValue("operator"); String value = getQueryValue("value"); String
-	 * type = getQueryValue("type"); if (feature == null || operator == null ||
-	 * value == null || type == null) { return new JSONArray().toString(); }
-	 * Query q = new Query(); Operation o = new Operation( new
-	 * Expression(operator, Feature.fromType(feature, Integer.parseInt(type),
-	 * value))); q.addOperation(o); System.out.println("Query: " + q);
-	 * QueryRequest qr = new QueryRequest(q); Event event =
-	 * this.connector.sendMessage(qr); System.out.println("Response received");
-	 * QueryResponse response = (QueryResponse) event; List<Path<Feature,
-	 * String>> results = response.getResults(); JSONArray featureset = new
-	 * JSONArray(); for (Path<Feature, String> path : results) { List<Feature>
-	 * features = path.getLabels(); JSONObject properties = new JSONObject();
-	 * for (Feature f : features) { properties.put(f.getName(), f.getString());
-	 * } featureset.put(properties); } return featureset.toString();
-	 */
-	/*
-	 * return null; } catch (Exception ioe) { ioe.printStackTrace(); throw new
-	 * ResourceException(ioe.getCause()); } }
-	 */
 	@Get
 	public String getBlocks() {
 		try {
@@ -78,7 +54,6 @@ public class BlocksServerResource extends ColumbusServerResource {
 				query = new Query();
 				c.buildQuery(query);
 			}
-			boolean interactive = (jsonQuery.get("results") != JSONObject.NULL);
 			List<Coordinates> spatial = null;
 			if (jsonQuery.get("spatial") != JSONObject.NULL) {
 				JSONArray polygon = jsonQuery.getJSONArray("spatial");
@@ -108,13 +83,10 @@ public class BlocksServerResource extends ColumbusServerResource {
 			qr = (query != null) ? new QueryRequest(jsonQuery.getString("identifier"), null, query)
 					: (spatial != null) ? new QueryRequest(jsonQuery.getString("identifier"), spatial)
 							: new QueryRequest(jsonQuery.getString("identifier"), timeString);
-			if (interactive)
-				qr.makeInteractive();
 			if (spatial != null)
 				qr.setPolygon(spatial);
 			if (temporal)
 				qr.setTime(timeString);
-			LOGGER.info("interactive=" + interactive);
 			LOGGER.info("spatial=" + spatial);
 			LOGGER.info("temporal=" + timeString);
 			if (query != null)
@@ -123,7 +95,6 @@ public class BlocksServerResource extends ColumbusServerResource {
 
 			Event event = sendMessage(qr);
 			QueryResponse response = ((QueryResponse) event);
-			LOGGER.info("results=" + response.getResults());
 			LOGGER.info("jsonResults=" + response.getJSONResults());
 			JSONObject jsonResponse = response.getJSONResults();
 			jsonResponse.put("elapsedTime", response.getElapsedTime() + "ms");

@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +31,7 @@ import org.restlet.representation.FileRepresentation;
 import org.restlet.routing.Router;
 import org.restlet.util.Series;
 
+import galileo.net.NetworkDestination;
 import galileo.resource.BlocksServerResource;
 import galileo.resource.FeaturesServerResource;
 import galileo.resource.FeaturesetServerResource;
@@ -47,7 +47,7 @@ import galileo.resource.StatusServerResource;
  */
 public class ColumbusServerApplication extends Application {
 	private static final Logger LOGGER = Logger.getLogger(ColumbusServerApplication.class.getName());
-	private List<Entry<String, Integer>> hostnames;
+	private List<NetworkDestination> destinations;
 	private Map<String, String> hostAddresses;
 	private int currentServer;
 
@@ -69,27 +69,26 @@ public class ColumbusServerApplication extends Application {
 			FileRepresentation hostsfile = new FileRepresentation(configFile, MediaType.TEXT_PLAIN);
 			String hosts = hostsfile.getText();
 			String[] hostnames = hosts.split("\\r?\\n");
-			this.hostnames = new ArrayList<>();
-			Map<String, Integer> hostMap = new HashMap<>();
+			this.destinations = new ArrayList<>();
 			for (String hostname : hostnames) {
 				String[] host = hostname.split(":");
-				hostMap.put(host[0], Integer.parseInt(host[1]));
+				this.destinations.add(new NetworkDestination(host[0], Integer.parseInt(host[1])));
 			}
-			this.hostnames.addAll(hostMap.entrySet());
 			this.hostAddresses = new HashMap<String, String>();
-			for(Entry<String, Integer> host: this.hostnames){
-				try{
-					this.hostAddresses.put(host.getKey(), InetAddress.getByName(host.getKey()).getHostAddress());
-				} catch(Exception uhe){
-					this.hostAddresses.put(host.getKey(), host.getKey());
+			for (NetworkDestination destination : this.destinations) {
+				String hostname = destination.getHostname();
+				try {
+					this.hostAddresses.put(hostname, InetAddress.getByName(hostname).getHostAddress());
+				} catch (Exception uhe) {
+					this.hostAddresses.put(hostname, hostname);
 				}
 			}
 		} catch (IOException e) {
-			LOGGER.log(Level.SEVERE, "Failed to read the hostnames", e);
+			LOGGER.log(Level.SEVERE, "Failed to initialize the setup", e);
 		}
 	}
-	
-	public static String getFailureResponse(String request, String message){
+
+	public static String getFailureResponse(String request, String message) {
 		JSONObject failResponse = new JSONObject();
 		failResponse.put("request", request);
 		failResponse.put("status", "error");
@@ -97,17 +96,17 @@ public class ColumbusServerApplication extends Application {
 		return failResponse.toString();
 	}
 
-	public Entry<String, Integer> getServerAddress() {
-		if (this.currentServer >= this.hostnames.size())
+	public synchronized NetworkDestination getDestination() {
+		if (this.currentServer >= this.destinations.size())
 			this.currentServer = 0;
-		return this.hostnames.get(this.currentServer++);
+		return this.destinations.get(this.currentServer++);
 	}
 
-	public List<Entry<String, Integer>> getAllHosts() {
-		return Collections.unmodifiableList(this.hostnames);
+	public List<NetworkDestination> getAllDestinations() {
+		return Collections.unmodifiableList(this.destinations);
 	}
-	
-	public Map<String, String> getAllHostAddresses(){
+
+	public Map<String, String> getAllHostAddresses() {
 		return Collections.unmodifiableMap(this.hostAddresses);
 	}
 

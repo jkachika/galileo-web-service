@@ -39,7 +39,6 @@ public class FeaturesetServerResource extends ColumbusServerResource {
 				c.buildQuery(query);
 			}
 
-			boolean interactive = (jsonQuery.get("results") != JSONObject.NULL);
 			List<Coordinates> spatial = null;
 			if (jsonQuery.get("spatial") != JSONObject.NULL) {
 				JSONArray polygon = jsonQuery.getJSONArray("spatial");
@@ -82,33 +81,22 @@ public class FeaturesetServerResource extends ColumbusServerResource {
 			qr = (query != null) ? new QueryRequest(jsonQuery.getString("identifier"), null, query)
 					: (spatial != null) ? new QueryRequest(jsonQuery.getString("identifier"), spatial)
 							: new QueryRequest(jsonQuery.getString("identifier"), timeString);
-			if (interactive)
-				qr.makeInteractive();
 			if (spatial != null)
 				qr.setPolygon(spatial);
 			if (temporal)
 				qr.setTime(timeString);
-
+			long start = System.currentTimeMillis();
 			Event event = sendMessage(qr);
 			QueryResponse response = ((QueryResponse) event);
 			JSONObject jsonResponse = new JSONObject();
-			if(!qr.isInteractive()){
-				 jsonResponse = response.getJSONResults();
-			} else {
-				JSONArray blockResults = new JSONArray();
-				jsonResponse.put("header", new JSONArray(response.getResultHeader()));
-				jsonResponse.put("filesystem", qr.getFilesystemName());
-				jsonResponse.put("results", blockResults);
-				List<List<String>> results = response.getResults();
-				int totalResultSize = results.size();
-				for(List<String> path : results){
-					JSONArray jsonPath = new JSONArray(path);
-					blockResults.put(jsonPath);
+			jsonResponse = response.getJSONResults();
+			//TODO: Implement another server resource to obtain the block contents given its path
+			/*if (jsonQuery.get("results") != JSONObject.NULL) {
+				while (response.hasBlocks()) {
+					response.getNextBlocks(5);
 				}
-				jsonResponse.put("totalResultSize", totalResultSize);
-				jsonResponse.put("totalProcessingTime", response.getElapsedTime());
-			}
-			jsonResponse.put("elapsedTime", response.getElapsedTime() + "ms");
+			}*/
+			jsonResponse.put("elapsedTime", (System.currentTimeMillis() - start) + "ms");
 			return jsonResponse.toString();
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE, "Failed to get the feature set", e);
