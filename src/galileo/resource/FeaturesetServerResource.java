@@ -96,6 +96,7 @@ public class FeaturesetServerResource extends ColumbusServerResource {
 					response.getNextBlocks(5);
 				}
 			}*/
+			jsonResponse.put("header", response.getHeader());
 			jsonResponse.put("elapsedTime", (System.currentTimeMillis() - start) + "ms");
 			return jsonResponse.toString();
 		} catch (Exception e) {
