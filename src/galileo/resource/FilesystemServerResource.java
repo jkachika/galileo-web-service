@@ -10,6 +10,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.restlet.resource.Get;
 
+import galileo.comm.FilesystemAction;
+import galileo.comm.FilesystemRequest;
 import galileo.comm.MetadataRequest;
 import galileo.comm.MetadataResponse;
 import galileo.event.Event;
@@ -123,6 +125,24 @@ public class FilesystemServerResource extends ColumbusServerResource {
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE, "Failed to get the overview", e);
 			return ColumbusServerApplication.getFailureResponse("overview", e.getMessage());
+		}
+	}
+	
+	@Get("?delete")
+	public String deleteFilesystem() {
+		try {
+			String fsName = getQueryValue("name");
+			FilesystemRequest fsr = new FilesystemRequest(fsName, FilesystemAction.DELETE, null, null);
+			publishEvent(fsr);
+			JSONObject responseJSON = new JSONObject();
+			responseJSON.put("kind", "galileo#filesystem");
+			responseJSON.put("action", "delete");
+			responseJSON.put("status", "submitted");
+			responseJSON.put("message", "Request the list of filesystems to ensure successful deletion.");
+			return responseJSON.toString();
+		} catch(Exception e){
+			LOGGER.log(Level.SEVERE, "Failed to delete the filesystem", e);
+			return ColumbusServerApplication.getFailureResponse("delete", e.getMessage());
 		}
 	}
 	

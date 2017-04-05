@@ -60,8 +60,8 @@ public class BlocksServerResource extends ColumbusServerResource {
 				spatial = new ArrayList<>();
 				for (int i = 0; i < polygon.length(); i++) {
 					JSONObject vertex = polygon.getJSONObject(i);
-					float lat = Float.parseFloat(vertex.getString("lat"));
-					float lon = Float.parseFloat(vertex.getString("lon"));
+					float lat = Float.parseFloat(String.valueOf(vertex.get("lat")));
+					float lon = Float.parseFloat(String.valueOf(vertex.get("lon")));
 					spatial.add(new Coordinates(lat, lon));
 				}
 			}

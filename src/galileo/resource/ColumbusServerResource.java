@@ -50,4 +50,8 @@ public class ColumbusServerResource extends ServerResource {
 	public Event sendMessage(Event request) throws IOException, InterruptedException {
 		return this.connector.sendMessage(this.destination, request);
 	}
+	
+	public void publishEvent(Event request) throws IOException, InterruptedException {
+		this.connector.publishEvent(this.destination, request);
+	}
 }
