@@ -110,8 +110,10 @@ This section describes the installation and configuration of the requirements on
     ```sh
     $ sudo apt-get install ant
     ```
-    
-9. Download the distribution
+
+## Deployment
+
+1. Download the distribution
     ```sh
     $ cd
     $ sudo apt-get install wget unzip
@@ -119,17 +121,17 @@ This section describes the installation and configuration of the requirements on
     $ unzip master.zip
     ```
     
-10. Update the hostnames to the list of hosts running Galileo and save the file
+2. Update the hostnames to the list of hosts running Galileo and save the file
     ```sh
     $ cd galileo-web-service-master/WebContent/WEB-INF
     $ vi hostnames
     ```
 
-11. Build using Ant. When the build is successful, the WAR file is placed in `dist` folder.
+3. Build using Ant. When the build is successful, the WAR file is placed in `dist` folder.
     ```sh
     $ cd
     $ cd galileo-web-service-master
     $ ant
     ```
 
-12. Deploy the WAR file using Tomcat manager console.
+4. Deploy the WAR file using Tomcat manager console.
